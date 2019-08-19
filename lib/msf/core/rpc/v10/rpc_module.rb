@@ -663,24 +663,22 @@ private
     s = Msf::Simple::Exploit.exploit_simple(mod, {
       'Payload'  => opts['PAYLOAD'],
       'Target'   => opts['TARGET'],
-      'RunAsJob' => true,
+      'RunAsJob' => false,
       'Options'  => opts
     })
     {
-      "job_id" => mod.job_id,
-      "uuid" => mod.uuid
+      "result" => s
     }
   end
 
   def _run_auxiliary(mod, opts)
-    Msf::Simple::Auxiliary.run_simple(mod, {
+    s = Msf::Simple::Auxiliary.run_simple(mod, {
       'Action'   => opts['ACTION'],
-      'RunAsJob' => true,
+      'RunAsJob' => false,
       'Options'  => opts
     })
     {
-      "job_id" => mod.job_id,
-      "uuid" => mod.uuid
+        "result" => s
     }
   end
 

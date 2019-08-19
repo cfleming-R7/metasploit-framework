@@ -79,10 +79,12 @@ module Auxiliary
       # Propagate this back to the caller for console mgmt
       omod.job_id = mod.job_id
     else
-      self.job_run_proc(ctx)
-      self.job_cleanup_proc(ctx)
-    end
+      result = self.job_run_proc(ctx)
 
+      self.job_cleanup_proc(ctx)
+
+      return result
+    end
   end
 
   #
@@ -137,7 +139,7 @@ protected
     begin
       mod.setup
       mod.framework.events.on_module_run(mod)
-      mod.run
+      result = mod.run
     rescue Msf::Auxiliary::Complete
       mod.cleanup
       return
@@ -178,8 +180,8 @@ protected
 
       mod.cleanup
 
-      return
     end
+    return result
   end
 
   #

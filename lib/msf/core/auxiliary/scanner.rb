@@ -48,6 +48,7 @@ end
 # The command handler when launched from the console
 #
 def run
+  result = nil
   @show_progress = datastore['ShowProgress']
   @show_percent  = datastore['ShowProgressPercent'].to_i
 
@@ -108,7 +109,7 @@ def run
           nmod.datastore['RHOST'] = targ
 
           begin
-            nmod.run_host(targ)
+            result = nmod.run_host(targ)
           rescue ::Rex::BindFailed
             if datastore['CHOST']
               @scan_errors << "The source IP (CHOST) value of #{datastore['CHOST']} was not usable"
@@ -148,6 +149,9 @@ def run
     end
 
     scanner_handle_fatal_errors
+    if result
+      return result
+    end
     return
   end
 
