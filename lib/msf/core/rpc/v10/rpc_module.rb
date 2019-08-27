@@ -483,6 +483,28 @@ class RPC_Module < RPC_Base
 
   end
 
+  # Runs the check method of a module.
+  #
+  # @param [String] mtype Module type. Supported types include (case-sensitive):
+  #                       * exploit
+  #                       * auxiliary
+  # @param [String] mname Module name. For example: 'windows/smb/ms08_067_netapi'.
+  # @param [Hash] opts Options for the module (such as datastore options).
+  # @raise [Msf::RPC::Exception] Module not found (either wrong type or name).
+  # @return
+  def rpc_check(mtype, mname, opts)
+    mod = _find_module(mtype,mname)
+    case mtype
+    when 'exploit'
+      _check_exploit(mod, opts)
+    when 'auxiliary'
+      _check_auxiliary(mod, opts)
+    else
+      error(500, "Invalid Module Type: #{mtype}")
+    end
+
+  end
+
   # Returns a list of executable format names.
   #
   # @return [Array<String>] A list of executable format names, for example: ["exe"]
@@ -676,6 +698,28 @@ private
       'Action'   => opts['ACTION'],
       'RunAsJob' => false,
       'Options'  => opts
+    })
+    {
+        "result" => s
+    }
+  end
+
+  def _check_exploit(mod, opts)
+    s = Msf::Simple::Exploit.check_simple(mod, {
+        'Action'   => opts['ACTION'],
+        'RunAsJob' => false,
+        'Options'  => opts
+    })
+    {
+        "result" => s
+    }
+  end
+
+  def _check_auxiliary(mod, opts)
+    s = Msf::Simple::Auxiliary.check_simple(mod, {
+        'Action'   => opts['ACTION'],
+        'RunAsJob' => false,
+        'Options'  => opts
     })
     {
         "result" => s
