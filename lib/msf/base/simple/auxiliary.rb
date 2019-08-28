@@ -106,16 +106,28 @@ module Auxiliary
   #
   # 	The local output through which data can be displayed.
   #
-  def self.check_simple(mod, opts)
+  def self.check_simple(omod, opts)
+    # Clone the module to prevent changes to the original instance
+    mod = omod.replicant
+    Msf::Simple::Framework.simplify_module( mod, false )
+    yield(mod) if block_given?
+
+    # Import options from the OptionStr or Option hash.
+    mod._import_extra_options(opts)
+
+    mod.datastore['ACTION'] = opts['Action'] if opts['Action']
+
     if opts['LocalInput']
       mod.init_ui(opts['LocalInput'], opts['LocalOutput'])
     end
 
-    # Validate the option container state so that options will
-    # be normalized
-    mod.validate
+    # Verify the ACTION
+    if (mod.actions.length > 0 and not mod.action)
+      raise MissingActionError, "Please use: #{mod.actions.collect {|e| e.name} * ", "}"
+    end
 
-    mod.setup
+    # Verify the options
+    mod.options.validate(mod.datastore)
 
     # Run check if it exists
     mod.respond_to?(:check) ? mod.check : Msf::Exploit::CheckCode::Unsupported
