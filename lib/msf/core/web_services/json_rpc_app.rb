@@ -18,7 +18,6 @@ module Msf::WebServices
     register FrameworkExtension
 
     # Servlet registration
-    register AuthServlet
     register JsonRpcServlet
 
     configure do
@@ -26,14 +25,6 @@ module Msf::WebServices
 
       set :sessions, {key: 'msf-ws.session', expire_after: 300}
       set :session_secret, ENV.fetch('MSF_WS_SESSION_SECRET', SecureRandom.hex(16))
-    end
-
-    before do
-      # store DBManager in request environment so that it is available to Warden
-      request.env['msf.db_manager'] = get_db
-      # store flag indicating whether authentication is initialized in the request environment
-      @@auth_initialized ||= get_db.users({}).count > 0
-      request.env['msf.auth_initialized'] = @@auth_initialized
     end
 
     use Warden::Manager do |config|

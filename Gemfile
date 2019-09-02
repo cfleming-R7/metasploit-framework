@@ -4,6 +4,7 @@ source 'https://rubygems.org'
 gemspec name: 'metasploit-framework'
 
 gem 'sqlite3', '~>1.3.0'
+gem 'swagger-blocks'
 
 # separate from test as simplecov is not run on travis-ci
 group :coverage do
@@ -36,7 +37,6 @@ group :development, :test do
   # environment is development
   gem 'rspec-rails'
   gem 'rspec-rerun'
-  gem 'swagger-blocks'
 end
 
 group :test do
