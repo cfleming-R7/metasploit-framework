@@ -21,8 +21,10 @@ module Msf::WebServices
         warden.authenticate!
         begin
           body = request.body.read
+          request.logger.debug("#{body}")
           tmp_params = sanitize_params(params)
           data = get_dispatcher(settings.dispatchers, tmp_params[:version].to_sym, framework).process(body)
+          request.logger.debug("#{data}")
           set_raw_response(data)
         rescue => e
           print_error("There was an error executing the RPC: #{e.message}.", e)
