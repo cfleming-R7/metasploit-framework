@@ -21,6 +21,7 @@ module Msf::WebServices
     register JsonRpcServlet
 
     configure do
+      set :logging, Logger::DEBUG
       set :dispatchers, {}
 
       set :sessions, {key: 'msf-ws.session', expire_after: 300}

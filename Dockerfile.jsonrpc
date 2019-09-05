@@ -64,4 +64,4 @@ EXPOSE 55553/tcp
 # it results in access denied errors.
 ENTRYPOINT ["docker/entrypoint.sh"]
 #CMD ["./msfrpcd", "-U", "username", "-P", "password", "-j", "-f", "-n", "-S"]
-CMD thin --rackup msf-json-rpc.ru --address 0.0.0.0 --port 55553  --ssl-disable-verify --environment production --trace start
+CMD thin --rackup msf-json-rpc.ru --address 0.0.0.0 --port 55553  --ssl-disable-verify --environment production start
