@@ -16,7 +16,6 @@ module Authentication
       # Authenticate the request.
       def authenticate!
         auth_initialized = request.env['msf.auth_initialized']
-        db_manager = env['msf.db_manager']
         authorization = request.env[AUTHORIZATION]
         if !auth_initialized
           success!({message: "Initialize authentication by creating an initial user account."})
@@ -27,14 +26,7 @@ module Authentication
             token = params[TOKEN_QUERY_PARAM]
           end
 
-          user = db_manager.users(persistence_token: token).first
-
-          validation_data = validate_user(user)
-          if validation_data[:valid]
-            success!(user)
-          else
-            throw(:warden, message: validation_data[:message], code: validation_data[:code])
-          end
+          settings.token_from_file.nil? ? auth_from_file(token) : auth_from_db(token)
         end
       end
 
@@ -46,6 +38,24 @@ module Authentication
       # @option :message [String] strategy failure message
       def validate_user(user)
         !user.nil? ? {valid: true, code: 0, message: nil} : {valid: false, code: 401, message: "Invalid API token."}
+      end
+
+      private
+
+      def auth_from_db(token)
+        db_manager = env['msf.db_manager']
+        user = db_manager.users(persistence_token: token).first
+
+        validation_data = validate_user(user)
+        if validation_data[:valid]
+          success!(user)
+        else
+          throw(:warden, message: validation_data[:message], code: validation_data[:code])
+        end
+      end
+
+      def auth_from_file(token)
+        token == settings.token_from_file ? success!({message: "Initialize authentication by creating an initial user account."}) : fail!
       end
 
     end

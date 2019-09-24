@@ -26,6 +26,39 @@ module Msf::WebServices
 
       set :sessions, {key: 'msf-ws.session', expire_after: 300}
       set :session_secret, ENV.fetch('MSF_WS_SESSION_SECRET', SecureRandom.hex(16))
+      set :api_token_file, ENV.fetch('MSF_API_TOKEN_FILE', nil)
+      unless :api_token_file.nil?
+        file = File.open(settings.api_token_file)
+        data = JSON.load(file)
+        set :token_from_file, data[:token]
+      end
+
+    end
+
+    def db_ready(db)
+      begin
+        db.check
+      rescue
+        false
+      end
+    end
+
+    before do
+      # store DBManager in request environment so that it is available to Warden
+      db = get_db
+      if db_ready(db)
+        request.env['msf.db_manager'] = db
+        @@auth_initialized ||= db.users({}).count > 0
+      else
+        if !settings.token_from_file.nil?
+          @@auth_initialized = true
+        else
+          @@auth_initialized = false
+        end
+      end
+
+      # store flag indicating whether authentication is initialized in the request environment
+      request.env['msf.auth_initialized'] = @@auth_initialized
     end
 
     use Warden::Manager do |config|
