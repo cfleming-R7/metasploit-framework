@@ -493,16 +493,37 @@ class RPC_Module < RPC_Base
   # @raise [Msf::RPC::Exception] Module not found (either wrong type or name).
   # @return
   def rpc_check(mtype, mname, opts)
-    mod = _find_module(mtype,mname)
-    case mtype
-    when 'exploit'
-      _check_exploit(mod, opts)
-    when 'auxiliary'
-      _run_auxiliary(mod, opts)
-    else
-      error(500, "Invalid Module Type: #{mtype}")
-    end
+    @@checks ||= {}
+    uuid = Rex::Text.rand_text_alphanumeric(20)
+    @@checks[uuid] = if rand > 0.5 # 50% chance
+                       ['completed', 'vulnerable', rand(4)]
+                     elsif rand > 0.5 # 25% chance
+                       ['completed', 'safe', rand(4)]
+                     else # 25% chance
+                       ['errored', 'Could not connect to host', rand(6)]
+                     end
+    {'uuid' => uuid, 'job_id' => rand(100000)}
 
+  end
+
+  # TODO: expand these to take a list of UUIDs or stream with event data if
+  # required for performance
+  def rpc_results(uuid)
+    status, result, times = @@checks[uuid]
+    if times && times > 0
+      @@checks[uuid][2] -= 1
+      {"status" => "running"}
+    elsif status == "errored"
+      {"status" => status, "error" => result}
+    elsif status == "completed"
+      {"status" => status, "result" => result}
+    else
+      error(404, "Results not found for module instance #{uuid}")
+    end
+  end
+
+  def rpc_ack(uuid)
+    {"success" => !!@@checks.delete(uuid)
   end
 
   # Returns a list of executable format names.
