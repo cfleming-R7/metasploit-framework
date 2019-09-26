@@ -42,6 +42,7 @@ PATH
       pcaprub
       pdf-reader
       pg (~> 0.20)
+      puma
       railties
       rb-readline
       recog
@@ -59,7 +60,7 @@ PATH
       rex-random_identifier
       rex-registry
       rex-rop_builder
-      rex-socket (= 0.1.17)
+      rex-socket
       rex-sslscan
       rex-struct2
       rex-text
@@ -115,16 +116,16 @@ GEM
     arel-helpers (2.10.0)
       activerecord (>= 3.1.0, < 7)
     aws-eventstream (1.0.3)
-    aws-partitions (1.208.0)
-    aws-sdk-core (3.66.0)
+    aws-partitions (1.217.0)
+    aws-sdk-core (3.68.0)
       aws-eventstream (~> 1.0, >= 1.0.2)
       aws-partitions (~> 1.0)
       aws-sigv4 (~> 1.1)
       jmespath (~> 1.0)
-    aws-sdk-ec2 (1.106.0)
+    aws-sdk-ec2 (1.110.0)
       aws-sdk-core (~> 3, >= 3.61.1)
       aws-sigv4 (~> 1.1)
-    aws-sdk-iam (1.29.0)
+    aws-sdk-iam (1.30.0)
       aws-sdk-core (~> 3, >= 3.61.1)
       aws-sigv4 (~> 1.1)
     aws-sdk-kms (1.24.0)
@@ -225,6 +226,7 @@ GEM
     net-ssh (5.2.0)
     network_interface (0.0.2)
     nexpose (7.2.1)
+    nio4r (2.5.1)
     nokogiri (1.10.4)
       mini_portile2 (~> 2.4.0)
     octokit (4.14.0)
@@ -251,6 +253,8 @@ GEM
       coderay (~> 1.1.0)
       method_source (~> 0.9.0)
     public_suffix (4.0.1)
+    puma (4.1.1)
+      nio4r (~> 2.0)
     rack (1.6.11)
     rack-protection (1.5.5)
       rack
@@ -317,7 +321,7 @@ GEM
       rex-socket
       rex-text
     rex-struct2 (0.1.2)
-    rex-text (0.2.23)
+    rex-text (0.2.24)
     rex-zip (0.1.3)
       rex-text
     rkelly-remix (0.0.7)
@@ -351,7 +355,7 @@ GEM
       rubyntlm
       windows_error
     rubyntlm (0.6.2)
-    rubyzip (1.2.3)
+    rubyzip (1.2.4)
     sawyer (0.8.2)
       addressable (>= 2.3.5)
       faraday (> 0.8, < 2.0)
@@ -378,7 +382,7 @@ GEM
     ttfunk (1.5.1)
     tzinfo (1.2.5)
       thread_safe (~> 0.1)
-    tzinfo-data (1.2019.2)
+    tzinfo-data (1.2019.3)
       tzinfo (>= 1.0.0)
     warden (1.2.7)
       rack (>= 1.0)

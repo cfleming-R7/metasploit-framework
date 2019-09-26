@@ -111,7 +111,8 @@ module Msf::RPC::JSON
         end
 
         response
-      rescue ArgumentError
+      rescue ArgumentError => e
+        $stderr.puts e, e.backtrace
         raise InvalidParams.new
       rescue Msf::RPC::Exception => e
         raise ApplicationServerError.new(e.message, data: { code: e.code })

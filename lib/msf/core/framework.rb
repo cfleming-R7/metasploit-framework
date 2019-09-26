@@ -5,6 +5,7 @@
 #
 
 require 'monitor'
+require 'set'
 
 #
 # Project
@@ -81,6 +82,8 @@ class Framework
     self.analyze   = Analyze.new(self)
     self.plugins   = PluginManager.new(self)
     self.browser_profiles = Hash.new
+    self.running_checks   = Set.new
+    self.check_results    = Hash.new
 
     # Configure the thread factory
     Rex::ThreadFactory.provider = Metasploit::Framework::ThreadFactoryProvider.new(framework: self)
@@ -195,6 +198,14 @@ class Framework
   # framework objects to offer related objects/actions available.
   #
   attr_reader   :analyze
+  #
+  # A hash of module check results by UUID
+  #
+  attr_reader   :check_results
+  #
+  # A set of running checks by UUID
+  #
+  attr_reader   :running_checks
 
   #
   # The framework instance's data service proxy
@@ -271,6 +282,8 @@ protected
   attr_writer   :db # :nodoc:
   attr_writer   :browser_profiles # :nodoc:
   attr_writer   :analyze # :nodoc:
+  attr_writer   :check_results # :nodoc:
+  attr_writer   :running_checks # :nodoc:
 
   private
 

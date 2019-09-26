@@ -493,37 +493,35 @@ class RPC_Module < RPC_Base
   # @raise [Msf::RPC::Exception] Module not found (either wrong type or name).
   # @return
   def rpc_check(mtype, mname, opts)
-    @@checks ||= {}
-    uuid = Rex::Text.rand_text_alphanumeric(20)
-    @@checks[uuid] = if rand > 0.5 # 50% chance
-                       ['completed', 'vulnerable', rand(4)]
-                     elsif rand > 0.5 # 25% chance
-                       ['completed', 'safe', rand(4)]
-                     else # 25% chance
-                       ['errored', 'Could not connect to host', rand(6)]
-                     end
-    {'uuid' => uuid, 'job_id' => rand(100000)}
-
+    mod = _find_module(mtype,mname)
+    case mtype
+    when 'exploit'
+      _check_exploit(mod, opts)
+    when 'auxiliary'
+      _check_auxiliary(mod, opts)
+    else
+      error(500, "Invalid Module Type: #{mtype}")
+    end
   end
 
   # TODO: expand these to take a list of UUIDs or stream with event data if
   # required for performance
   def rpc_results(uuid)
-    status, result, times = @@checks[uuid]
-    if times && times > 0
-      @@checks[uuid][2] -= 1
+    if r = self.framework.check_results[uuid]
+      if r[:error]
+        {"status" => "errored", "error" => r[:error]}
+      else
+        {"status" => "completed", "result" => r[:result]}
+      end
+    elsif self.framework.running_checks.include? uuid
       {"status" => "running"}
-    elsif status == "errored"
-      {"status" => status, "error" => result}
-    elsif status == "completed"
-      {"status" => status, "result" => result}
     else
       error(404, "Results not found for module instance #{uuid}")
     end
   end
 
   def rpc_ack(uuid)
-    {"success" => !!@@checks.delete(uuid)
+    {"success" => !!self.framework.module_results.delete(uuid)}
   end
 
   # Returns a list of executable format names.
@@ -703,47 +701,50 @@ private
   end
 
   def _run_exploit(mod, opts)
-    s = Msf::Simple::Exploit.exploit_simple(mod, {
+    Msf::Simple::Exploit.exploit_simple(mod, {
       'Payload'  => opts['PAYLOAD'],
       'Target'   => opts['TARGET'],
-      'RunAsJob' => false,
+      'RunAsJob' => true,
       'Options'  => opts
     })
     {
-      "result" => s
+      "job_id" => mod.job_id,
+      "uuid" => mod.uuid
     }
   end
 
   def _run_auxiliary(mod, opts)
-    s = Msf::Simple::Auxiliary.run_simple(mod, {
+    Msf::Simple::Auxiliary.run_simple(mod, {
       'Action'   => opts['ACTION'],
-      'RunAsJob' => false,
+      'RunAsJob' => true,
       'Options'  => opts
     })
     {
-        "result" => s
+      "job_id" => mod.job_id,
+      "uuid" => mod.uuid
     }
   end
 
   def _check_exploit(mod, opts)
-    s = Msf::Simple::Exploit.check_simple(mod, {
-        'Action'   => opts['ACTION'],
-        'RunAsJob' => false,
+    Msf::Simple::Exploit.check_simple(mod, {
+        'RunAsJob' => true,
         'Options'  => opts
     })
     {
-        "result" => s
+      "job_id" => mod.job_id,
+      "uuid" => mod.uuid
     }
   end
 
   def _check_auxiliary(mod, opts)
-    s = Msf::Simple::Auxiliary.check_simple(mod, {
+    uuid, job = Msf::Simple::Auxiliary.check_simple(mod, {
         'Action'   => opts['ACTION'],
-        'RunAsJob' => false,
+        'RunAsJob' => true,
         'Options'  => opts
     })
     {
-        "result" => s
+      "job_id" => job,
+      "uuid" => uuid
     }
   end
 

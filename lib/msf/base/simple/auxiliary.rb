@@ -73,13 +73,15 @@ module Auxiliary
       mod.job_id = mod.framework.jobs.start_bg_job(
         "Auxiliary: #{mod.refname}",
         ctx,
-        Proc.new { |ctx_| self.job_run_proc(ctx_) },
+        Proc.new { |ctx_| self.job_run_proc(ctx_) { mod.run } },
         Proc.new { |ctx_| self.job_cleanup_proc(ctx_) }
       )
       # Propagate this back to the caller for console mgmt
       omod.job_id = mod.job_id
     else
-      result = self.job_run_proc(ctx)
+      result = self.job_run_proc(ctx) do
+        mod.run
+      end
 
       self.job_cleanup_proc(ctx)
 
@@ -125,12 +127,39 @@ module Auxiliary
     if (mod.actions.length > 0 and not mod.action)
       raise MissingActionError, "Please use: #{mod.actions.collect {|e| e.name} * ", "}"
     end
+    $stderr.puts mod.datastore
 
     # Verify the options
     mod.options.validate(mod.datastore)
 
-    # Run check if it exists
-    mod.respond_to?(:check) ? mod.check : Msf::Exploit::CheckCode::Unsupported
+
+    ctx = [mod]
+    if opts['RunAsJob']
+      mod.job_id = mod.framework.jobs.start_bg_job(
+        "Auxiliary: #{mod.refname} check",
+        ctx,
+        Proc.new do |ctx_|
+          self.job_run_proc(ctx_) do
+            m = ctx_[0]
+            m.framework.running_checks << m.uuid
+            r = m.respond_to?(:check) ? m.check : Msf::Exploit::CheckCode::Unsupported
+            m.framework.check_results[m.uuid] = {result: r}
+            r
+          rescue Exception => e
+            m.framework.check_results[m.uuid] = {error: e.to_s}
+          ensure
+            m.framework.running_checks.delete m.uuid
+          end
+        end,
+        Proc.new { |ctx_| self.job_cleanup_proc(ctx_) }
+      )
+      # Propagate this back to the caller for console mgmt
+      omod.job_id = mod.job_id
+      [mod.uuid, mod.job_id]
+    else
+      # Run check if it exists
+      mod.respond_to?(:check) ? mod.check : Msf::Exploit::CheckCode::Unsupported
+    end
   end
 
   #
@@ -146,12 +175,12 @@ protected
   #
   # Job run proc, sets up the module and kicks it off.
   #
-  def self.job_run_proc(ctx)
+  def self.job_run_proc(ctx, &block)
     mod = ctx[0]
     begin
       mod.setup
       mod.framework.events.on_module_run(mod)
-      result = mod.run
+      result = block.call
     rescue Msf::Auxiliary::Complete
       mod.cleanup
       return

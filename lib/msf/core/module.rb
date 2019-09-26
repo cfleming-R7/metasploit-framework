@@ -159,6 +159,7 @@ class Module
     obj.user_output  = self.user_output
     obj.module_store = self.module_store.clone
 
+    obj.generate_uuid
     obj.perform_extensions
     obj
   end

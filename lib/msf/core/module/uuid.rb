@@ -22,6 +22,6 @@ module Msf::Module::UUID
   #
 
   def generate_uuid
-    self.uuid = Rex::Text.rand_text_alphanumeric(8).downcase
+    self.uuid = Rex::Text.rand_text_alphanumeric(24).downcase
   end
 end
