@@ -73,15 +73,14 @@ module Auxiliary
       mod.job_id = mod.framework.jobs.start_bg_job(
         "Auxiliary: #{mod.refname}",
         ctx,
-        Proc.new { |ctx_| self.job_run_proc(ctx_) { mod.run } },
+        Proc.new { |ctx_| self.job_run_proc(ctx_) {|m| m.run } },
         Proc.new { |ctx_| self.job_cleanup_proc(ctx_) }
       )
       # Propagate this back to the caller for console mgmt
       omod.job_id = mod.job_id
+      return [mod.uuid, mod.job_id]
     else
-      result = self.job_run_proc(ctx) do
-        mod.run
-      end
+      result = self.job_run_proc(ctx) {|m| m.run }
 
       self.job_cleanup_proc(ctx)
 
@@ -127,28 +126,18 @@ module Auxiliary
     if (mod.actions.length > 0 and not mod.action)
       raise MissingActionError, "Please use: #{mod.actions.collect {|e| e.name} * ", "}"
     end
-    $stderr.puts mod.datastore
 
     # Verify the options
     mod.options.validate(mod.datastore)
 
-
-    ctx = [mod]
     if opts['RunAsJob']
+      ctx = [mod]
       mod.job_id = mod.framework.jobs.start_bg_job(
         "Auxiliary: #{mod.refname} check",
         ctx,
         Proc.new do |ctx_|
-          self.job_run_proc(ctx_) do
-            m = ctx_[0]
-            m.framework.running_checks << m.uuid
-            r = m.respond_to?(:check) ? m.check : Msf::Exploit::CheckCode::Unsupported
-            m.framework.check_results[m.uuid] = {result: r}
-            r
-          rescue Exception => e
-            m.framework.check_results[m.uuid] = {error: e.to_s}
-          ensure
-            m.framework.running_checks.delete m.uuid
+          self.job_run_proc(ctx_) do |m|
+            m.respond_to?(:check) ? m.check : Msf::Exploit::CheckCode::Unsupported
           end
         end,
         Proc.new { |ctx_| self.job_cleanup_proc(ctx_) }
@@ -180,7 +169,16 @@ protected
     begin
       mod.setup
       mod.framework.events.on_module_run(mod)
-      result = block.call
+      begin
+        mod.framework.running_checks << mod.uuid
+        result = block.call(mod)
+        mod.framework.check_results[mod.uuid] = {result: result}
+      rescue Exception => e
+        mod.framework.check_results[mod.uuid] = {error: e.to_s}
+        raise
+      ensure
+        mod.framework.running_checks.delete mod.uuid
+      end
     rescue Msf::Auxiliary::Complete
       mod.cleanup
       return

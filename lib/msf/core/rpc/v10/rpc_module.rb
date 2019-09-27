@@ -498,7 +498,7 @@ class RPC_Module < RPC_Base
     when 'exploit'
       _check_exploit(mod, opts)
     when 'auxiliary'
-      _check_auxiliary(mod, opts)
+      _run_auxiliary(mod, opts)
     else
       error(500, "Invalid Module Type: #{mtype}")
     end
@@ -714,14 +714,14 @@ private
   end
 
   def _run_auxiliary(mod, opts)
-    Msf::Simple::Auxiliary.run_simple(mod, {
+    uuid, job = Msf::Simple::Auxiliary.run_simple(mod, {
       'Action'   => opts['ACTION'],
       'RunAsJob' => true,
       'Options'  => opts
     })
     {
-      "job_id" => mod.job_id,
-      "uuid" => mod.uuid
+      "job_id" => job,
+      "uuid" => uuid
     }
   end
 
