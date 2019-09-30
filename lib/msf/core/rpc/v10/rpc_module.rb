@@ -726,13 +726,13 @@ private
   end
 
   def _check_exploit(mod, opts)
-    Msf::Simple::Exploit.check_simple(mod, {
+    uuid, job = Msf::Simple::Exploit.check_simple(mod, {
         'RunAsJob' => true,
         'Options'  => opts
     })
     {
-      "job_id" => mod.job_id,
-      "uuid" => mod.uuid
+      "job_id" => job,
+      "uuid" => uuid
     }
   end
 
