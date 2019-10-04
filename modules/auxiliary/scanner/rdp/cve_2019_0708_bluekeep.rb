@@ -61,9 +61,6 @@ class MetasploitModule < Msf::Auxiliary
     status = check_host(ip)
     if status == Exploit::CheckCode::Vulnerable
       print_good(status[1].to_s)
-    elsif status == Exploit::CheckCode::Unsupported  # used to display custom msg error
-      status = Exploit::CheckCode::Safe
-      print_status("The target service is not running or refused our connection.")
     else
       print_status(status[1].to_s)
     end
@@ -89,7 +86,7 @@ class MetasploitModule < Msf::Auxiliary
       begin
         nsock = connect
       rescue ::Errno::ETIMEDOUT, Rex::HostUnreachable, Rex::ConnectionTimeout, Rex::ConnectionRefused, ::Timeout::Error, ::EOFError
-        return Exploit::CheckCode::Unsupported # used to display custom msg error
+        return Exploit::CheckCode::Safe("The target service is not running or refused our connection.")
       end
 
       status = Exploit::CheckCode::Detected
@@ -172,7 +169,7 @@ class MetasploitModule < Msf::Auxiliary
           return Exploit::CheckCode::Unknown
         else
           print_good("Target service appears to have been successfully crashed.")
-          return Exploit::CheckCode::Vulnerable
+          return Exploit::CheckCode::Vulnerable("The target appears to have been crashed by disconnecting from an incorrectly-bound MS_T120 channel.")
         end
       end
 
@@ -182,7 +179,7 @@ class MetasploitModule < Msf::Auxiliary
       rescue EOFError
         # we don't care
       end
-      return Exploit::CheckCode::Vulnerable if res&.include?(["0300000902f0802180"].pack("H*"))
+      return Exploit::CheckCode::Vulnerable("The target allowed cleanup of the incorrectly-bound MS_T120 channel.") if res&.include?(["0300000902f0802180"].pack("H*"))
 
       # Slow check for Ultimatum PDU. If it doesn't respond in a timely
       # manner then the host is likely patched.
@@ -191,7 +188,7 @@ class MetasploitModule < Msf::Auxiliary
           res = rdp_recv
           # 0x2180 = MCS Disconnect Provider Ultimatum PDU - 2.2.2.3
           if res.include?(["0300000902f0802180"].pack("H*"))
-            return Exploit::CheckCode::Vulnerable
+            return Exploit::CheckCode::Vulnerable("The target allowed cleanup of the incorrectly-bound MS_T120 channel.")
           end
           # vprint_good("#{bin_to_hex(res)}")
         end
