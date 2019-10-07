@@ -69,6 +69,7 @@ module Auxiliary
     end
 
     ctx = [ mod ]
+    mod.framework.queueing_checks << mod.uuid
     if(mod.passive? or opts['RunAsJob'])
       mod.job_id = mod.framework.jobs.start_bg_job(
         "Auxiliary: #{mod.refname}",
@@ -132,6 +133,7 @@ module Auxiliary
 
     if opts['RunAsJob']
       ctx = [mod]
+      mod.framework.queueing_checks << mod.uuid
       mod.job_id = mod.framework.jobs.start_bg_job(
         "Auxiliary: #{mod.refname} check",
         ctx,
@@ -171,6 +173,7 @@ protected
       mod.framework.events.on_module_run(mod)
       begin
         mod.framework.running_checks << mod.uuid
+        mod.framework.queueing_checks.delete mod.uuid
         result = block.call(mod)
         mod.framework.check_results[mod.uuid] = {result: result}
       rescue Exception => e

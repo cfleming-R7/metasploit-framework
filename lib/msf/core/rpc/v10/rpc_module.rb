@@ -515,6 +515,8 @@ class RPC_Module < RPC_Base
       end
     elsif self.framework.running_checks.include? uuid
       {"status" => "running"}
+    elsif self.framework.queueing_checks.include? uuid
+      {"status" => "queueing"}
     else
       error(404, "Results not found for module instance #{uuid}")
     end

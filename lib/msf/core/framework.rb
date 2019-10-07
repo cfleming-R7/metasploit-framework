@@ -83,6 +83,7 @@ class Framework
     self.plugins   = PluginManager.new(self)
     self.browser_profiles = Hash.new
     self.running_checks   = Set.new
+    self.queueing_checks  = Set.new
     self.check_results    = Hash.new
 
     # Configure the thread factory
@@ -206,6 +207,10 @@ class Framework
   # A set of running checks by UUID
   #
   attr_reader   :running_checks
+  #
+  # A set of queueing checks by UUID
+  #
+  attr_reader   :queueing_checks
 
   #
   # The framework instance's data service proxy
@@ -284,6 +289,7 @@ protected
   attr_writer   :analyze # :nodoc:
   attr_writer   :check_results # :nodoc:
   attr_writer   :running_checks # :nodoc:
+  attr_writer   :queueing_checks # :nodoc:
 
   private
 
