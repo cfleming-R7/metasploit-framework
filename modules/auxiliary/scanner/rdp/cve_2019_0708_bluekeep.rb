@@ -174,7 +174,7 @@ class MetasploitModule < Msf::Auxiliary
 
       # Quick check for the Ultimatum PDU
       begin
-        res = rdp_recv(-1, 1)
+        res = rdp_recv(1)
       rescue EOFError
         # we don't care
       end
